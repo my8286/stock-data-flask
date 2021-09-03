@@ -123,8 +123,8 @@ class NseIndia:
 
 @app.route('/') #decorator drfines the   
 def home():  
-    return "Server is running on  localhost:5000";
-    
+    return "Server is running on  localhost:5000"
+
 @app.route('/live') #decorator drfines the   
 def live():  
     #refresh()
