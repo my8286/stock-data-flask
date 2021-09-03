@@ -58,7 +58,7 @@ class NseIndia:
         df = pd.DataFrame(data)
         df = df.loc[:,["symbol","open","dayHigh","dayLow","lastPrice","previousClose","change","pChange"]]
         # return list(df["symbol"])
-        df.to_csv(f"stock/live.csv")
+        #df.to_csv(f"stock/live.csv")
         return df
 
     def holidays(self):
