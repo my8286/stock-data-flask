@@ -4,13 +4,17 @@ from datetime import datetime, timedelta
 import pandas as pd
 import requests
 from flask import jsonify
+from flask_cors import CORS, cross_origin
+from nsepython import *
+
+
 pd.set_option('display.max_rows', None)
 pd.set_option('display.max_columns', None)
 pd.set_option('display.width', None)
   
-app = Flask(__name__) #creating the Flask class object   
-
-
+app = Flask(__name__) #creating the Flask class object 
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'  
 
 
 class NseIndia:
@@ -59,6 +63,9 @@ class NseIndia:
         df = df.loc[:,["symbol","open","dayHigh","dayLow","lastPrice","previousClose","change","pChange"]]
         # return list(df["symbol"])
         #df.to_csv(f"stock/live.csv")
+       
+        df=df.to_dict(orient="records")
+        #print(df)
         return df
 
     def holidays(self):
@@ -69,6 +76,28 @@ class NseIndia:
         df = pd.DataFrame(list(data.values())[0])
         return df
 
+    def nse_custom_function_secfno(self,symbol,attribute="lastPrice"):
+        positions = nsefetch('https://www.nseindia.com/api/equity-stockIndices?index=SECURITIES%20IN%20F%26O')
+        endp = len(positions['data'])
+        for x in range(0, endp):
+            if(positions['data'][x]['symbol']==symbol.upper()):
+                data = positions['data'][x]
+                df = pd.DataFrame(data)
+                df = df.loc[:,["symbol","open","dayHigh","dayLow","lastPrice","previousClose","change","pChange"]]
+                # return positions['data'][x]
+                df=df.to_dict(orient="records")
+
+                return df
+
+    def get_all_secfno(self):
+        positions = nsefetch('https://www.nseindia.com/api/equity-stockIndices?index=SECURITIES%20IN%20F%26O')
+        data = positions['data']
+        df = pd.DataFrame(data)
+        df = df.loc[:,["symbol","open","dayHigh","dayLow","lastPrice","previousClose","change","pChange"]]
+        # return positions['data'][x]
+        df=df.to_dict(orient="records")
+
+        return df
 
 
 
@@ -121,23 +150,37 @@ class NseIndia:
 
 
 
-@app.route('/') #decorator drfines the   
+@app.route('/')  
+@cross_origin() 
 def home():  
     return "Server is running on  localhost:5000"
 
-@app.route('/live') #decorator drfines the   
+
+nse = NseIndia()
+@app.route("/market")
+@cross_origin()
+def market():
+    df=nse.nse_custom_function_secfno("Reliance")
+    #print(df)
+    return jsonify(df)
+
+@app.route('/live') 
+@cross_origin()
 def live():  
     #refresh()
-    nse = NseIndia()
+    
     df=nse.live_market_data()
-    df_list = df.values.tolist()
-    JSONP_data = jsonify(df_list)
-    return JSONP_data
+    
+    #return df
+
+    # df_list = df.values.tolist()
+    # JSONP_data = jsonify(df_list)
+    # return JSONP_data
 
     # print(nse.pre_market_data())
     #print(nse.live_market_data())
     # print(nse.holidays())
-    #return jsonify(df);  
+    return jsonify(df);  
   
 if __name__ =='__main__':  
     app.run(debug = True)  
